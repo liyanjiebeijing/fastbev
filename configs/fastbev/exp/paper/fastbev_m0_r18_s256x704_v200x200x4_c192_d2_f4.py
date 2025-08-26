@@ -143,11 +143,11 @@ data_config = {
     'pad_color': (0, 0, 0),
 }
 
-# file_client_args = dict(backend='disk')
-file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        data_root: 'public-1424:s3://openmmlab/datasets/detection3d/nuscenes/'}))
+file_client_args = dict(backend='disk')
+# file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         data_root: 'public-1424:s3://openmmlab/datasets/detection3d/nuscenes/'}))
 
 train_pipeline = [
     dict(type='MultiViewPipeline', sequential=True, n_images=6, n_times=4, transforms=[
@@ -204,8 +204,12 @@ test_pipeline = [
     dict(type='Collect3D', keys=['img'])]
 
 data = dict(
-    samples_per_gpu=1,
-    workers_per_gpu=1,
+    train_dataloader = dict(
+        pin_memory=True,
+        persistent_workers=True,
+    ),
+    samples_per_gpu=4,
+    workers_per_gpu=10,
     train=dict(
         type='CBGSDataset',
         dataset=dict(
@@ -279,7 +283,8 @@ data = dict(
 )
 
 optimizer = dict(
-    type='AdamW2',
+    # type='AdamW2',
+    type='AdamW',
     lr=0.0004,
     weight_decay=0.01,
     paramwise_cfg=dict(

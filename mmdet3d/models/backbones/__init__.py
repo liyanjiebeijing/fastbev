@@ -6,7 +6,7 @@ from .pointnet2_sa_msg import PointNet2SAMSG
 from .pointnet2_sa_ssg import PointNet2SASSG
 from .second import SECOND
 from .vovnet import VoVNet
-from .swin_transformer import SwinTransformer
+# from .swin_transformer import SwinTransformer
 # from .dla import *
 
 __all__ = [
