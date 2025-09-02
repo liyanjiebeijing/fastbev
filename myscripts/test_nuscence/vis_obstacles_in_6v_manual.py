@@ -80,7 +80,9 @@ def visualize_sample(nusc, sample_token, cam_name="CAM_FRONT"):
 
     ax.set_title(f"{cam_name} with 3D boxes")
     ax.axis("off")
+    fig.tight_layout()
     fig.savefig("./cam_front_manual_render.png") # 如果需要保存
+    print("图像已成功渲染并保存至 ./cam_front_manual_render.png")
 
 
 if __name__ == "__main__":
