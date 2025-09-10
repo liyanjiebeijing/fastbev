@@ -23,6 +23,8 @@ def vis_point_cloud(sample_index=20,
     lidar_token = my_sample['data']['LIDAR_TOP']
     lidar_data = nusc.get('sample_data', lidar_token)
     cs_record = nusc.get('calibrated_sensor', lidar_data['calibrated_sensor_token'])
+    print("lidar to ego pose:", cs_record['translation'], '\n', cs_record['rotation'], '\n',
+          Quaternion(cs_record['rotation']).rotation_matrix )
     pose_record = nusc.get('ego_pose', lidar_data['ego_pose_token'])
     lidar_filepath = nusc.get_sample_data_path(lidar_token)
 
