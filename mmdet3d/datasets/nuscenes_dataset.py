@@ -293,6 +293,30 @@ class NuScenesDataset(Custom3DDataset):
                 lidar2img_rt = (viewpad @ lidar2cam_rt.T)
                 lidar2img_rts.append(lidar2img_rt)
 
+                #上述代码虽然正确，但难以理解，改成如下合理一些：
+                # lidar2cam_r = cam_info['sensor2lidar_rotation'].T
+                # lidar2cam_t = -lidar2cam_r @ cam_info['sensor2lidar_translation']
+                # lidar2cam_rt = np.eye(4)
+                # lidar2cam_rt[:3, :3] = lidar2cam_r
+                # lidar2cam_rt[:3, 3]  = lidar2cam_t
+
+                # # keep aug rts
+                # lidar2img_aug = {
+                #     'intrin': cam_info['cam_intrinsic'],
+                #     'rot': cam_info['sensor2lidar_rotation'],
+                #     'tran': cam_info['sensor2lidar_translation'],
+                #     'post_rot': np.eye(3),
+                #     'post_tran': np.zeros(3),
+                # }
+                # lidar2img_augs.append(lidar2img_aug)
+
+                # viewpad = np.eye(4)
+                # viewpad[:intrinsic.shape[0], :intrinsic.shape[1]] = intrinsic
+
+                # lidar2img_rt = (viewpad @ lidar2cam_rt)
+                # lidar2img_rts.append(lidar2img_rt)
+
+
             if self.sequential:
                 adjacent_type_list = []
                 adjacent_id_list = []
@@ -477,7 +501,7 @@ class NuScenesDataset(Custom3DDataset):
             gt_velocity = info['gt_velocity'][mask]
             nan_mask = np.isnan(gt_velocity[:, 0])
             gt_velocity[nan_mask] = [0.0, 0.0]
-            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
+            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1) #N x 9
 
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
@@ -487,9 +511,9 @@ class NuScenesDataset(Custom3DDataset):
             origin=(0.5, 0.5, 0.5)).convert_to(self.box_mode_3d)
 
         anns_results = dict(
-            gt_bboxes_3d=gt_bboxes_3d,
-            gt_labels_3d=gt_labels_3d,
-            gt_names=gt_names_3d
+            gt_bboxes_3d=gt_bboxes_3d, # N x 9
+            gt_labels_3d=gt_labels_3d, # N
+            gt_names=gt_names_3d # N
         )
         return anns_results
 

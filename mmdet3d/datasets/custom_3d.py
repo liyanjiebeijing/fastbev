@@ -12,6 +12,72 @@ from .pipelines import Compose
 from .utils import extract_result_dict, get_loading_pipeline
 from IPython import embed
 import ipdb
+from mmcv.parallel import DataContainer
+import torch
+
+
+def print_dict_tree(data, indent=0, prefix='', processed_keys=None):
+    """
+    递归打印字典的树形结构，支持 DataContainer，处理键名前4字符相同的情况
+    :param data: 要处理的数据(字典或列表)
+    :param indent: 当前缩进级别
+    :param prefix: 连接线前缀
+    :param processed_keys: 已处理的键名前缀集合
+    """
+    if processed_keys is None:
+        processed_keys = set()
+
+    # ✅ 新增对 DataContainer 的特殊处理
+    if isinstance(data, DataContainer):
+        # 打印 DataContainer 的数据类型和形状
+        inner_data = data.data
+        if isinstance(inner_data, np.ndarray):
+            print(prefix + f'└── DataContainer (ndarray) shape={inner_data.shape}')
+        elif isinstance(inner_data, torch.Tensor):
+            print(prefix + f'└── DataContainer (Tensor) shape={inner_data.shape}')
+        elif isinstance(inner_data, (list, dict)):
+            print(prefix + f'└── DataContainer (type={type(inner_data).__name__})')
+            # 递归打印内部数据
+            print_dict_tree(inner_data, indent, prefix + '│   ', processed_keys)
+        else:
+            len_str = f', len={len(inner_data)}' if hasattr(inner_data, '__len__') else ''
+            print(prefix + f'└── DataContainer (type={type(inner_data).__name__}, len={len_str})')
+        return
+
+    if isinstance(data, dict):
+        keys = list(data.keys())
+        for i, key in enumerate(keys):
+            is_last = (i == len(keys) - 1)
+            connector = '└── ' if is_last else '├── '
+
+            key_prefix = str(key)[:4]
+            skip_recursion = key_prefix in processed_keys
+            if not skip_recursion:
+                processed_keys.add(key_prefix)
+
+            print(prefix + connector + str(key))
+
+            if not skip_recursion:
+                new_prefix = prefix + ('    ' if is_last else '│   ')
+                print_dict_tree(data[key], indent + 1, new_prefix, processed_keys)
+
+    elif isinstance(data, list) and len(data) > 0:
+        id = len(data) // 2
+        print(prefix + f'├── [{id}]')
+        print_dict_tree(data[id], indent + 1, prefix + '│   ', processed_keys)
+
+    else:
+        if isinstance(data, np.ndarray):
+            print(prefix + f'└── ndarray shape={data.shape}')
+        else:
+            try:
+                length = len(data)
+            except Exception:
+                length = None
+            if length is not None:
+                print(prefix + f'└── type={type(data).__name__}, len={length}')
+            else:
+                print(prefix + f'└── type={type(data).__name__}, value={data}')
 
 
 @DATASETS.register_module()

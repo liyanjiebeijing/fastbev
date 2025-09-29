@@ -185,21 +185,21 @@ class Anchor3DRangeGenerator(object):
         rotations = torch.tensor(rotations, device=device)
 
         # torch.meshgrid default behavior is 'id', np's default is 'xy'
-        rets = torch.meshgrid(x_centers, y_centers, z_centers, rotations)
+        rets = torch.meshgrid(x_centers, y_centers, z_centers, rotations) # tuple(100, 100, 1, 2)
         # torch.meshgrid returns a tuple rather than list
         rets = list(rets)
         tile_shape = [1] * 5
-        tile_shape[-2] = int(sizes.shape[0])
+        tile_shape[-2] = int(sizes.shape[0])  # 1,1,1,4,1
         for i in range(len(rets)):
-            rets[i] = rets[i].unsqueeze(-2).repeat(tile_shape).unsqueeze(-1)
+            rets[i] = rets[i].unsqueeze(-2).repeat(tile_shape).unsqueeze(-1) # 100, 100, 1, 2 -> 100,100,1,4,2,1
 
-        sizes = sizes.reshape([1, 1, 1, -1, 1, 3])
+        sizes = sizes.reshape([1, 1, 1, -1, 1, 3]) # 1,1,1,4,1,3
         tile_size_shape = list(rets[0].shape)
         tile_size_shape[3] = 1
-        sizes = sizes.repeat(tile_size_shape)
-        rets.insert(3, sizes)
+        sizes = sizes.repeat(tile_size_shape) # 100,100,1,4,2,3
+        rets.insert(3, sizes) # [x, y, z, size, rotation]
 
-        ret = torch.cat(rets, dim=-1).permute([2, 1, 0, 3, 4, 5])
+        ret = torch.cat(rets, dim=-1).permute([2, 1, 0, 3, 4, 5]) # 1, 100, 100, 4, 2, 7
         # [1, 200, 176, N, 2, 7] for kitti after permute
 
         if len(self.custom_values) > 0:
@@ -208,7 +208,7 @@ class Anchor3DRangeGenerator(object):
             # custom[:] = self.custom_values
             ret = torch.cat([ret, custom], dim=-1)
             # [1, 200, 176, N, 2, 9] for nus dataset after permute
-        return ret
+        return ret # 1, 100, 100, 4, 2, 9
 
 
 @ANCHOR_GENERATORS.register_module()
@@ -324,7 +324,7 @@ class AlignedAnchor3DRangeGenerator(Anchor3DRangeGenerator):
             # TODO: check the support of custom values
             # custom[:] = self.custom_values
             ret = torch.cat([ret, custom], dim=-1)
-        return ret
+        return ret # 1, 100, 100, 4, 2, 9
 
 
 @ANCHOR_GENERATORS.register_module()
@@ -387,7 +387,7 @@ class AlignedAnchor3DRangeGeneratorPerCls(AlignedAnchor3DRangeGenerator):
 
         multi_cls_anchors = []
         for i in range(len(featmap_sizes)):
-            anchors = self.anchors_single_range(
+            anchors = self.anchors_single_range(  # 1, 100, 100, 4, 2, 9
                 featmap_sizes[i],
                 self.ranges[i],
                 scale,
