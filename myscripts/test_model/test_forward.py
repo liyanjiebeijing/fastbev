@@ -195,12 +195,8 @@ for i, data in enumerate(data_loader):
     with torch.no_grad():
         result = model(return_loss=False, rescale=True, **data)
 
-    print_dict_tree(result)
-
     # ===== Step 4: 可视化（绘制到图像上） =====
     imgs = data['img'].data[0][:6].permute(0,2,3,1).cpu().numpy()  # (6, H, W, 3)
-
-
 
     # 取出 GT 3D box
     gt_bboxes_3d = data['gt_bboxes_3d'][0] if 'gt_bboxes_3d' in data else None
@@ -215,9 +211,6 @@ for i, data in enumerate(data_loader):
 
     # 相机投影矩阵
     proj_mat = data['img_metas'][0]['lidar2img']['extrinsic']
-
-    import pdb
-    pdb.set_trace()
 
      # ----------------------------
     # 4. 可视化
@@ -242,9 +235,9 @@ for i, data in enumerate(data_loader):
             img_with_boxes = draw_3d_boxes_on_image(img_with_boxes, gt_bboxes_3d, lidar2img_matrix, color=(255, 0, 0))
         drawn_imgs.append(img_with_boxes)
 
-
-    for i in range(num_views):
-        cv2.imwrite(f"./{out_dir}/view_{i}.jpg", drawn_imgs[i][:, :, ::-1])
+    # #保存单张图片
+    # for i in range(num_views):
+    #     cv2.imwrite(f"./{out_dir}/view_{i}.jpg", drawn_imgs[i][:, :, ::-1])
 
 
     # 显示结果
@@ -265,27 +258,6 @@ for i, data in enumerate(data_loader):
     plt.tight_layout()
     plt.savefig(output_path)
     print(f"Visualization saved to {output_path}")
-
-
     break
-
-
-
-    # # 可视化（会生成多张 6V 图像）
-    # show_multi_modality_result(
-    #     img=imgs,
-    #     gt_bboxes=gt_bboxes_3d,
-    #     pred_bboxes=pred_bboxes_3d,
-    #     proj_mat=proj_mat,
-    #     out_dir=out_dir,
-    #     filename=f'frame_{i:06d}',
-    #     box_mode='lidar',
-    #     img_metas=data['img_metas'][0].data[0],
-    #     show=False
-    # )
-
-
-    # if i > 10:  # 只跑前10张看看效果
-    #     break
 
 print("推理与可视化完成，结果保存在 vis/ 目录下。")
